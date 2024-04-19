@@ -1,5 +1,5 @@
-use std::{env, fs};
 use std::path::{Path, PathBuf};
+use std::{env, fs};
 
 use crate::error::{FriggenError, Result};
 
