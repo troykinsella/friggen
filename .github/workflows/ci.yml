@@ -1,4 +1,4 @@
-name: ci
+name: CI
 
 permissions:
   contents: read
@@ -7,7 +7,7 @@ on:
   pull_request:
   push:
     branches:
-      - "*master"
+      - master
 
 env:
   RUST_BACKTRACE: 1
