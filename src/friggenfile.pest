@@ -1,0 +1,53 @@
+inline_ws = _{ " " | "\t" }
+wsnl = _{ (inline_ws | NEWLINE)+ }
+comment = _{ "#" ~ !"#" ~ (!NEWLINE ~ ANY)* ~ NEWLINE? }
+
+sig_ws = { " " | "\t" }
+
+task_name = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_" | "-")* }
+var_name = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_" )* }
+
+plain_value = { (!NEWLINE ~ ANY)+ }
+single_quoted_value = { (!"'" ~ ANY)* }
+double_quoted_value = { (!"\"" ~ ANY)* }
+triple_quoted_value = { (!"\"\"\"" ~ ANY)* }
+backtick_quoted_value = { (!"`" ~ ANY)* }
+quoted_value = _{
+  "\"\"\"" ~ triple_quoted_value ~ "\"\"\"" |
+  "\"" ~ double_quoted_value ~ "\"" |
+  "'" ~ single_quoted_value ~ "'" |
+  "`" ~ backtick_quoted_value ~ "`"
+}
+var_value = _{ quoted_value | plain_value | NEWLINE }
+var_decl = { var_name ~ inline_ws* ~ "=" ~ inline_ws* ~ var_value ~ inline_ws* ~ NEWLINE? }
+
+hash_bang_component = { (ASCII_ALPHANUMERIC | "_" | "-" | "\\" | "/")+ }
+hash_bang = {
+  inline_ws+ ~
+  "#!" ~
+  hash_bang_component ~
+  (inline_ws+ ~ hash_bang_component)* ~
+  NEWLINE
+}
+task_script_line = { (sig_ws+ ~ (!NEWLINE ~ ANY)* ~ NEWLINE? | NEWLINE) }
+task_script = { #hash_bang = hash_bang? ~ task_script_line+ }
+
+dep_bang = { "!" }
+task_dep = { task_name ~ dep_bang? }
+task_dep_list = { task_dep ~ (inline_ws+ ~ task_dep)* }
+
+task_header = {
+  task_name ~ inline_ws* ~ ":" ~
+  inline_ws* ~ task_dep_list? ~ inline_ws* ~ NEWLINE
+}
+
+task_doc_line_content = @{ (!NEWLINE ~ ANY)* ~ NEWLINE? }
+task_doc_line = { "##" ~ inline_ws* ~ task_doc_line_content }
+task_docs = { task_doc_line+ }
+
+task_def = { task_docs? ~ wsnl* ~ task_header ~ task_script }
+
+top_level = _{ wsnl | comment | var_decl | task_def }
+
+root = { top_level* }
+friggenfile = _{ SOI ~ root ~ EOI }

@@ -1,0 +1,30 @@
+[package]
+name = "friggen"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+clap = { version = "4.5", features = ["derive", "env"] }
+log = "0.4"
+env_logger = { version = "0.11", features = [] }
+thiserror = "1.0"
+anyhow = { version = "1.0", features = ["backtrace"] }
+ariadne = "0.4.0"
+colored = "2.1.0"
+pest = { version = "2.7.9" }
+pest_derive = { version = "2.7.9", features = ["grammar-extras"] }
+dotenv = "0.15.0"
+tempfile = "3.10.1"
+shellexpand = "3.1.0"
+
+[profile.dev]
+opt-level = 1
+
+[profile.dev.package."*"]
+opt-level = 3
+
+[profile.release]
+lto = true
+codegen-units = 1
+debug = false
+opt-level = 3
