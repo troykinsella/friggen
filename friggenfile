@@ -1,0 +1,34 @@
+
+targets = x86_64-unknown-linux-musl aarch64-unknown-linux-musl
+
+## Install dependent development tools
+dev-tools:
+  cargo install cross --git https://github.com/cross-rs/cross
+
+## Statically analyze source correctness
+check:
+  cargo check
+  cargo clippy -- -W clippy::correctness -D warnings
+  cargo fmt --check --all
+
+## Run all tests
+test: check
+  cargo test
+
+## Build it
+build:
+  cargo build
+
+## Cross-compile release binaries
+build-release:
+  for t in $targets; do
+    cross build --release --target "$t"
+  done
+
+## Archive the release binaries
+package: build-release
+  version=$(grep 'version' Cargo.toml | head -1 | cut -d' ' -f3 | tr -d '"')
+  for t in $targets; do
+    t_short=$(echo "$t" | cut -d'-' -f1)
+    tar -zcf target/friggen-linux-${t_short}-${version}.tar.gz -C target/${t}/release friggen
+  done
