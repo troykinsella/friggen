@@ -9,6 +9,8 @@
 [![Downloads](https://img.shields.io/github/downloads/troykinsella/friggen/total.svg)](https://github.com/troykinsella/friggen/releases)
 ![MIT/Apache 2.0](https://img.shields.io/badge/license-MIT%2FApache-blue.svg)
 
+![friggen_just_work.png](friggen_just_work.png)
+
 ## Why Would...
 
 * Tasks are just shell scripts, and that's about it, I guess.
