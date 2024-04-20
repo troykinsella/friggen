@@ -9,33 +9,57 @@ on:
       - v[0-9]+.*
 
 jobs:
-  create-release:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: taiki-e/create-gh-release-action@v1
-        with:
-          changelog: CHANGELOG.md
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-  upload-assets:
-    needs: create-release
+  release:
+    name: Release - ${{ matrix.platform.release_for }}
     strategy:
       matrix:
-        include:
-          - target: x86_64-unknown-linux-gnu
+        platform:
+          - release_for: linux-x86_64
             os: ubuntu-latest
-          #- target: x86_64-apple-darwin
-          #  os: macos-latest
-          #- target: x86_64-pc-windows-msvc
-          #  os: windows-latest
-    runs-on: ${{ matrix.os }}
+            target: x86_64-unknown-linux-musl
+            bin: friggen
+            name: friggen-linux-x86_64.tar.gz
+            command: build
+          - release_for: linux-aarch64
+            os: ubuntu-latest
+            target: aarch64-unknown-linux-musl
+            bin: friggen
+            name: friggen-linux-aarch64.tar.gz
+            command: build
+
+    runs-on: ${{ matrix.platform.os }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: taiki-e/upload-rust-binary-action@v1
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Build artifact
+        uses: houseabsolute/actions-rust-cross@v0
         with:
-          bin: friggen
-          target: ${{ matrix.target }}
-          tar: unix
-          zip: windows
-          token: ${{ secrets.GITHUB_TOKEN }}
+          command: ${{ matrix.platform.command }}
+          target: ${{ matrix.platform.target }}
+          args: "--locked --release"
+          strip: true
+
+      - name: Publish artifact
+        uses: softprops/action-gh-release@v2.0.4
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
+        with:
+          draft: false
+          files: ${{ steps.package.outputs.archive }}
+          prerelease: ${{ steps.ref-type.outputs.value != 'release' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish changelog
+        uses: softprops/action-gh-release@v2.0.4
+        if: >-
+          ${{
+            startsWith(github.ref, 'refs/tags/')
+            && matrix.target == 'x86_64-unknown-linux-musl'
+          }}
+        with:
+          draft: false
+          files: CHANGELOG.md
+          prerelease: ${{ steps.ref-type.outputs.value != 'release' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
