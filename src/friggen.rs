@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::collections::HashMap;
 use std::process::exit;
 use std::time::SystemTime;
@@ -10,7 +11,7 @@ use crate::friggenfile::{Friggenfile, Task, TaskDep};
 use crate::fs_context::FsContext;
 use crate::ioutil::read_file;
 use crate::print::{OutputPrinter, PrintTheme};
-use crate::shell::run_shell_script;
+use crate::shell::{eval_shell_command, run_shell_script};
 
 pub struct Friggen<'a> {
     fs_context: FsContext,
@@ -20,7 +21,7 @@ pub struct Friggen<'a> {
 }
 
 impl<'a> Friggen<'a> {
-    const DEFAULT_HASH_BANG: [&'static str; 2] = ["/usr/bin/env", "sh"];
+    const DEFAULT_HASH_BANG: [&'static str; 2] = ["/usr/bin/env", "bash"];
 
     pub fn new(
         fs_context: FsContext,
@@ -48,8 +49,8 @@ impl<'a> Friggen<'a> {
         build_task_map(ff.ast(), &mut tasks)?;
         validate_tasks(&tasks)?;
 
-        let mut vars: HashMap<&str, &str> = HashMap::new();
-        build_var_map(ff.ast(), &mut vars)?;
+        let mut vars: HashMap<&str, Cow<'_, str>> = HashMap::new();
+        self.build_var_map(ff.ast(), &mut vars)?;
         log::debug!("vars: {:?}", vars);
 
         if self.tasks.is_empty() {
@@ -135,7 +136,7 @@ impl<'a> Friggen<'a> {
         &self,
         task_name: &str,
         tasks: &HashMap<&str, Task<'_>>,
-        vars: &HashMap<&str, &str>,
+        vars: &HashMap<&str, Cow<'_, str>>,
     ) -> Result<i32> {
         let start = SystemTime::now();
 
@@ -158,6 +159,32 @@ impl<'a> Friggen<'a> {
             .print_timed_header(&msg, start);
 
         Ok(code)
+    }
+
+    fn build_var_map(&self, el: &'a AstNode, vars: &mut HashMap<&'a str, Cow<'a, str>>) -> Result<()> {
+        match el {
+            AstNode::Root(body) => {
+                for el in body {
+                    self.build_var_map(el, vars)?;
+                }
+            }
+            AstNode::VarAssignment(var) => {
+                let name = var.name;
+                let value = match var.value.as_ref() {
+                    AstNode::VarValue(value) => Cow::from(*value),
+                    AstNode::CommandSubstitution(command) => {
+                        let output = eval_shell_command("bash", command, &self.env_vars)?;
+                        // Mimic shell behaviour of removing trailing newlines in command substitution
+                        let output = output.trim_end_matches(&['\r', '\n']).to_string();
+                        Cow::from(output)
+                    },
+                    _ => unreachable!(),
+                };
+                vars.insert(name, value);
+            }
+            _ => {}
+        }
+        Ok(())
     }
 }
 
@@ -216,26 +243,7 @@ fn build_task_map<'a>(el: &'a AstNode, tasks: &mut HashMap<&'a str, Task<'a>>) -
     Ok(())
 }
 
-fn build_var_map<'a>(el: &'a AstNode, vars: &mut HashMap<&'a str, &'a str>) -> Result<()> {
-    match el {
-        AstNode::Root(body) => {
-            for el in body {
-                build_var_map(el, vars)?;
-            }
-        }
-        AstNode::VarDeclaration(var) => {
-            let name = var.name;
-            let value = match var.value.as_ref() {
-                AstNode::VarValue(value) => value,
-                AstNode::BacktickQuotedValue(s) => s, // TODO
-                _ => unreachable!(),
-            };
-            vars.insert(name, value);
-        }
-        _ => {}
-    }
-    Ok(())
-}
+
 
 fn validate_tasks(tasks: &HashMap<&str, Task<'_>>) -> Result<()> {
     for task in tasks.values() {

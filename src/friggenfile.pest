@@ -11,15 +11,17 @@ plain_value = { (!NEWLINE ~ ANY)+ }
 single_quoted_value = { (!"'" ~ ANY)* }
 double_quoted_value = { (!"\"" ~ ANY)* }
 triple_quoted_value = { (!"\"\"\"" ~ ANY)* }
-backtick_quoted_value = { (!"`" ~ ANY)* }
 quoted_value = _{
   "\"\"\"" ~ triple_quoted_value ~ "\"\"\"" |
   "\"" ~ double_quoted_value ~ "\"" |
-  "'" ~ single_quoted_value ~ "'" |
-  "`" ~ backtick_quoted_value ~ "`"
+  "'" ~ single_quoted_value ~ "'"
 }
-var_value = _{ quoted_value | plain_value | NEWLINE }
-var_decl = { var_name ~ inline_ws* ~ "=" ~ inline_ws* ~ var_value ~ inline_ws* ~ NEWLINE? }
+
+command_sub_command = { (!")" ~ ANY)* }
+command_sub = _{ "$(" ~ command_sub_command ~ ")" }
+
+var_value = _{ command_sub | quoted_value | plain_value | NEWLINE }
+var_assignment = { var_name ~ inline_ws* ~ "=" ~ inline_ws* ~ var_value ~ inline_ws* ~ NEWLINE? }
 
 hash_bang_component = { (ASCII_ALPHANUMERIC | "_" | "-" | "\\" | "/")+ }
 hash_bang = {
@@ -47,7 +49,7 @@ task_docs = { task_doc_line+ }
 
 task_def = { task_docs? ~ wsnl* ~ task_header ~ task_script }
 
-top_level = _{ wsnl | comment | var_decl | task_def }
+top_level = _{ wsnl | comment | var_assignment | task_def }
 
 root = { top_level* }
 friggenfile = _{ SOI ~ root ~ EOI }

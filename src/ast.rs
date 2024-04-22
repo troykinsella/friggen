@@ -7,9 +7,9 @@ pub enum AstNode<'src> {
     TaskScript(AstTaskScript<'src>),
     TaskDepList(Vec<Self>),
     TaskDep(AstTaskDep<'src>),
-    VarDeclaration(AstVarDeclaration<'src>),
+    VarAssignment(AstVarAssignment<'src>),
     VarValue(&'src str),
-    BacktickQuotedValue(&'src str),
+    CommandSubstitution(&'src str),
 }
 
 impl<'src> AstNode<'src> {
@@ -72,7 +72,7 @@ pub struct AstTaskScript<'src> {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct AstVarDeclaration<'src> {
+pub struct AstVarAssignment<'src> {
     pub name: &'src str,
     pub value: Box<AstNode<'src>>,
 }

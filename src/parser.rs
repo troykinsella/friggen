@@ -4,7 +4,7 @@ use pest::Parser;
 use pest_derive::Parser;
 
 use crate::ast::{
-    AstNode, AstTaskDef, AstTaskDep, AstTaskHeader, AstTaskScript, AstVarDeclaration,
+    AstNode, AstTaskDef, AstTaskDep, AstTaskHeader, AstTaskScript, AstVarAssignment,
 };
 
 #[derive(Parser)]
@@ -23,11 +23,15 @@ pub fn parse_friggenfile(buf: &str) -> Result<AstNode, Box<Error<Rule>>> {
 fn parse_ast(pair: Pair<Rule>) -> AstNode {
     match pair.as_rule() {
         Rule::root => AstNode::Root(pair.into_inner().map(parse_ast).collect()),
-        Rule::var_decl => {
+        Rule::var_assignment => {
             let mut pairs = pair.into_inner();
             let name = pairs.next().unwrap().as_str();
-            let value = parse_ast(pairs.next().unwrap());
-            AstNode::VarDeclaration(AstVarDeclaration {
+            let value = if let Some(next) = pairs.next() {
+                parse_ast(next)
+            } else {
+                AstNode::VarValue("")
+            };
+            AstNode::VarAssignment(AstVarAssignment {
                 name,
                 value: Box::new(value),
             })
@@ -39,11 +43,10 @@ fn parse_ast(pair: Pair<Rule>) -> AstNode {
             let value = pair.as_str();
             AstNode::VarValue(value)
         }
-        Rule::backtick_quoted_value => {
-            let value = pair.as_str();
-            AstNode::BacktickQuotedValue(value)
+        Rule::command_sub_command => {
+            let command = pair.as_str();
+            AstNode::CommandSubstitution(command)
         }
-        //Rule::var_value => parse_ast(pair.into_inner().next().unwrap()),
         Rule::task_def => {
             let mut pairs = pair.into_inner();
             let docs = if pairs.len() == 3 {
@@ -142,7 +145,7 @@ fn leading_whitespace(line: &str) -> usize {
 
 #[cfg(test)]
 mod tests {
-    use crate::ast::{AstNode, AstTaskDef, AstTaskHeader, AstTaskScript};
+    use crate::ast::{AstNode, AstTaskDef, AstTaskHeader, AstTaskScript, AstVarAssignment};
     use crate::parser::parse_friggenfile;
 
     #[test]
@@ -319,6 +322,117 @@ foo:
                     hash_bang: None,
                     lines: vec!["echo hi\n"],
                 })),
+            })])
+        );
+    }
+
+    #[test]
+    fn test_var_assignment_empty() {
+        let ff = r#"
+foo =
+"#;
+
+        let ast = parse_friggenfile(ff).unwrap();
+        assert_eq!(
+            ast,
+            AstNode::Root(vec![AstNode::VarAssignment(AstVarAssignment {
+                name: "foo",
+                value: Box::new(AstNode::VarValue("")),
+            })])
+        );
+    }
+
+    #[test]
+    fn test_var_assignment_plain() {
+        let ff = r#"
+foo = bar
+"#;
+
+        let ast = parse_friggenfile(ff).unwrap();
+        assert_eq!(
+            ast,
+            AstNode::Root(vec![AstNode::VarAssignment(AstVarAssignment {
+                name: "foo",
+                value: Box::new(AstNode::VarValue("bar")),
+            })])
+        );
+    }
+
+    #[test]
+    fn test_var_assignment_plain_no_eol() {
+        let ff = r#"
+foo = bar"#;
+
+        let ast = parse_friggenfile(ff).unwrap();
+        assert_eq!(
+            ast,
+            AstNode::Root(vec![AstNode::VarAssignment(AstVarAssignment {
+                name: "foo",
+                value: Box::new(AstNode::VarValue("bar")),
+            })])
+        );
+    }
+
+    #[test]
+    fn test_var_assignment_single_quote() {
+        let ff = r#"
+foo = 'bar'
+"#;
+
+        let ast = parse_friggenfile(ff).unwrap();
+        assert_eq!(
+            ast,
+            AstNode::Root(vec![AstNode::VarAssignment(AstVarAssignment {
+                name: "foo",
+                value: Box::new(AstNode::VarValue("bar")),
+            })])
+        );
+    }
+
+    #[test]
+    fn test_var_assignment_double_quote() {
+        let ff = r#"
+foo = "bar"
+"#;
+
+        let ast = parse_friggenfile(ff).unwrap();
+        assert_eq!(
+            ast,
+            AstNode::Root(vec![AstNode::VarAssignment(AstVarAssignment {
+                name: "foo",
+                value: Box::new(AstNode::VarValue("bar")),
+            })])
+        );
+    }
+
+    #[test]
+    fn test_var_assignment_triple_quote() {
+        let ff = r#"
+foo = """bar"""
+"#;
+
+        let ast = parse_friggenfile(ff).unwrap();
+        assert_eq!(
+            ast,
+            AstNode::Root(vec![AstNode::VarAssignment(AstVarAssignment {
+                name: "foo",
+                value: Box::new(AstNode::VarValue("bar")),
+            })])
+        );
+    }
+
+    #[test]
+    fn test_var_assignment_command_substitution() {
+        let ff = r#"
+foo = $(echo "bar")
+"#;
+
+        let ast = parse_friggenfile(ff).unwrap();
+        assert_eq!(
+            ast,
+            AstNode::Root(vec![AstNode::VarAssignment(AstVarAssignment {
+                name: "foo",
+                value: Box::new(AstNode::CommandSubstitution("echo \"bar\"")),
             })])
         );
     }
