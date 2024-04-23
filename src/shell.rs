@@ -1,10 +1,10 @@
-use std::collections::HashMap;
-use std::{fs, io};
 use std::borrow::Cow;
+use std::collections::HashMap;
 use std::io::{BufWriter, Write};
 use std::os::unix::fs::PermissionsExt;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
+use std::{fs, io};
 
 use tempfile::NamedTempFile;
 
@@ -13,7 +13,11 @@ use crate::error::Result;
 const SCRIPT_DIR: &str = "~/.cache/friggen";
 const SCRIPT_DIR_MODE: u32 = 0o750;
 
-pub fn eval_shell_command(shell: &str, cmd: &str, env_vars: &HashMap<&str, &str>) -> Result<String> {
+pub fn eval_shell_command(
+    shell: &str,
+    cmd: &str,
+    env_vars: &HashMap<&str, &str>,
+) -> Result<String> {
     let out = Command::new("/usr/bin/env")
         .arg(shell)
         .arg("-c")
@@ -28,10 +32,14 @@ pub fn eval_shell_command(shell: &str, cmd: &str, env_vars: &HashMap<&str, &str>
         Ok(stdout)
     } else {
         io::stderr().write_all(&out.stderr)?;
-        Err(anyhow::Error::msg(format!("command failed ({}): {}", out.status.code().unwrap(), cmd)).into())
+        Err(anyhow::Error::msg(format!(
+            "command failed ({}): {}",
+            out.status.code().unwrap(),
+            cmd
+        ))
+        .into())
     }
 }
-
 
 pub fn run_shell_script(
     hash_bang: &[&str],

@@ -161,7 +161,11 @@ impl<'a> Friggen<'a> {
         Ok(code)
     }
 
-    fn build_var_map(&self, el: &'a AstNode, vars: &mut HashMap<&'a str, Cow<'a, str>>) -> Result<()> {
+    fn build_var_map(
+        &self,
+        el: &'a AstNode,
+        vars: &mut HashMap<&'a str, Cow<'a, str>>,
+    ) -> Result<()> {
         match el {
             AstNode::Root(body) => {
                 for el in body {
@@ -177,7 +181,7 @@ impl<'a> Friggen<'a> {
                         // Mimic shell behaviour of removing trailing newlines in command substitution
                         let output = output.trim_end_matches(&['\r', '\n']).to_string();
                         Cow::from(output)
-                    },
+                    }
                     _ => unreachable!(),
                 };
                 vars.insert(name, value);
@@ -242,8 +246,6 @@ fn build_task_map<'a>(el: &'a AstNode, tasks: &mut HashMap<&'a str, Task<'a>>) -
     }
     Ok(())
 }
-
-
 
 fn validate_tasks(tasks: &HashMap<&str, Task<'_>>) -> Result<()> {
     for task in tasks.values() {

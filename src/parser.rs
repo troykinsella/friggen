@@ -3,9 +3,7 @@ use pest::iterators::Pair;
 use pest::Parser;
 use pest_derive::Parser;
 
-use crate::ast::{
-    AstNode, AstTaskDef, AstTaskDep, AstTaskHeader, AstTaskScript, AstVarAssignment,
-};
+use crate::ast::{AstNode, AstTaskDef, AstTaskDep, AstTaskHeader, AstTaskScript, AstVarAssignment};
 
 #[derive(Parser)]
 #[grammar = "friggenfile.pest"]
