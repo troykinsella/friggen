@@ -1,7 +1,8 @@
 use std::collections::HashMap;
+use std::process::exit;
 
 use crate::args::Args;
-use crate::error::Result;
+use crate::error::{FriggenError, Result};
 use crate::friggen::Friggen;
 use crate::fs_context::resolve_fs_context;
 use crate::print::{OutputPrinter, PrintTheme};
@@ -48,13 +49,32 @@ impl Cli {
         ))
     }
 
-    pub fn run(&self) -> Result<()> {
+    pub fn run(&self) {
         if self.args.version {
             println!("{} {}", APP_NAME, VERSION);
-            return Ok(());
+            return;
         }
 
-        let friggen = self.create_friggen()?;
-        friggen.run()
+        let friggen = match self.create_friggen() {
+            Ok(f) => f,
+            Err(err) => {
+                eprintln!("{}", err);
+                exit(1);
+            }
+        };
+
+        if let Err(err) = friggen.run() {
+            match err {
+                FriggenError::TaskError { task: _, exit_code} => {
+                    // Message already printed in task summary, but make sure we:
+                    exit(exit_code)
+                }
+                _ => {
+                    eprintln!("{}", err);
+                    exit(1);
+                }
+            }
+        }
     }
+
 }

@@ -115,7 +115,7 @@ fn process_script(script: &mut [&str]) {
 }
 
 fn find_indent(script: &[&str]) -> usize {
-    let first_line = script.iter().find(|line| !is_whitespace(line)).unwrap(); // TODO
+    let first_line = script.iter().find(|line| !is_whitespace(line)).unwrap();
     leading_whitespace(first_line)
 }
 

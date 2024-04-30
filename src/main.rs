@@ -1,5 +1,3 @@
-use std::process::exit;
-
 use clap::Parser;
 use dotenv::dotenv;
 
@@ -26,9 +24,5 @@ fn main() {
 
     let args = Args::parse();
     let cli = Cli::new(args);
-    let result = cli.run();
-    if let Err(err) = result {
-        log::error!("{}", err);
-        exit(1)
-    }
+    cli.run();
 }

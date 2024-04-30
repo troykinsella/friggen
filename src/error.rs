@@ -9,7 +9,7 @@ pub enum FriggenError {
     #[error("friggenfile not found")]
     FriggenfileNotFound,
 
-    #[error("friggenfile syntax error")]
+    #[error("friggenfile syntax error:\n{0}")]
     FriggenfileSyntaxError(Box<pest::error::Error<Rule>>),
 
     #[error("duplicate task definition: {0}")]
@@ -23,6 +23,9 @@ pub enum FriggenError {
 
     #[error("cyclic task reference: {0:?}")]
     CyclicTaskReference(Vec<String>),
+
+    #[error("task failed: {task} ({exit_code})")]
+    TaskError { task: String, exit_code: i32 },
 
     #[error("io error: {source:?}")]
     Io {

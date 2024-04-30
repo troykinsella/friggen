@@ -1,6 +1,5 @@
 use std::borrow::Cow;
 use std::collections::HashMap;
-use std::process::exit;
 use std::time::SystemTime;
 
 use colored::Colorize;
@@ -61,8 +60,10 @@ impl<'a> Friggen<'a> {
         let task_seq = build_task_sequence(&self.tasks, &tasks)?;
         log::debug!("sequence: {:?}", task_seq);
 
+        let mut last_task: &str = "";
         let mut last_code: i32 = 0;
         for task_name in task_seq {
+            last_task = task_name;
             last_code = self.run_task(task_name, &tasks, &vars)?;
             if last_code != 0 {
                 break;
@@ -74,7 +75,10 @@ impl<'a> Friggen<'a> {
             .print_timed_header("★ done", start_time);
 
         if last_code != 0 {
-            exit(last_code);
+            return Err(FriggenError::TaskError {
+                task: last_task.to_string(),
+                exit_code: last_code,
+            });
         }
 
         Ok(())

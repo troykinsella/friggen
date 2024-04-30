@@ -9,7 +9,6 @@ log = "0.4.21"
 env_logger = { version = "0.11.3", features = [] }
 thiserror = "1.0.58"
 anyhow = { version = "1.0.82", features = ["backtrace"] }
-ariadne = "0.4.0"
 colored = "2.1.0"
 pest = { version = "2.7.9" }
 pest_derive = { version = "2.7.9", features = ["grammar-extras"] }
