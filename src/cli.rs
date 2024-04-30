@@ -65,7 +65,7 @@ impl Cli {
 
         if let Err(err) = friggen.run() {
             match err {
-                FriggenError::TaskError { task: _, exit_code} => {
+                FriggenError::TaskError { task: _, exit_code } => {
                     // Message already printed in task summary, but make sure we:
                     exit(exit_code)
                 }
@@ -76,5 +76,4 @@ impl Cli {
             }
         }
     }
-
 }
