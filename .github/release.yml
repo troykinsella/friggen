@@ -1,0 +1,14 @@
+changelog:
+  exclude:
+    labels: [chore, undo]
+  categories:
+    - title: Breaking Changes ⚠️
+      labels: [breaking]
+    - title: Features ✨
+      labels: [feature]
+    - title: Fixed 🐛
+      labels: [bugfix, fix]
+    - title: Documentation 📖
+      labels: [docs]
+    - title: Other Changes
+      labels: ["*"]
