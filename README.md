@@ -31,7 +31,15 @@ Task bodies are just shell scripts.
 
 You can set the shell with a hash bang (`#!`), if that tickles ya.
 
-## Quickstart 
+## Installation
+
+Stroll your tookus on over to [Releases](https://github.com/troykinsella/friggen/releases/latest) and
+download the right archive for your system. Don't see an archive for your
+system? Well... this is awkward. File a ticket?
+
+Extract it and slap the `friggen` binary in `/usr/local/bin` or something. I dunno.
+
+## Quickstart
 
 ### Rock a `friggenfile` Lickity-Split:
 
