@@ -60,22 +60,22 @@ jobs:
           fi
           echo "friggen_version=$tag_version" >> $GITHUB_ENV
 
-      - name: Test
-        uses: houseabsolute/actions-rust-cross@v0
-        with:
-          command: test
-          target: ${{ matrix.platform.target }}
-          toolchain: ${{ matrix.toolchain }}
-          args: "--locked --release"
-
       - name: Build release
         uses: houseabsolute/actions-rust-cross@v0
         with:
           command: build
           target: ${{ matrix.platform.target }}
-          toolchain: ${{ matrix.toolchain }}
+          toolchain: stable
           args: "--locked --release"
           strip: true
+
+      - name: Test
+        uses: houseabsolute/actions-rust-cross@v0
+        with:
+          command: test
+          target: ${{ matrix.platform.target }}
+          toolchain: stable
+          args: "--locked --release"
 
       - name: Package release
         shell: bash
