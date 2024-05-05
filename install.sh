@@ -81,7 +81,7 @@ echo "fetching $archive_url"
 curl -fSsL "$archive_url" | tar -zxf - -C "$temp_dir"
 
 mv "$temp_dir/friggen" "$target"
-chmod 755 "$target"
+chmod 755 "$target/friggen"
 
 rm -rf "$temp_dir"
 
