@@ -5,12 +5,14 @@ set -euo pipefail
 owner=troykinsella
 repo=friggen
 
+# Functions
+
 usage() {
   {
-    echo "usage: $0 [options]"
+    echo "Usage: $0 [options]"
     echo "Install the latest version of friggen!"
     echo
-    echo "options:"
+    echo "Options:"
     echo -e "-h|--help\tThis business"
     echo -e "-t|--target\tThe directory path in which friggen will be installed [Default: /usr/local/bin]"
   } >&2
@@ -34,7 +36,7 @@ archive_name() {
       artifact_suffix="linux-aarch64"
       ;;
     *)
-      echo "friggen doesn't support your silly system. Not even sorry." >&2
+      echo "Friggen doesn't support your silly system. Not even sorry." >&2
       exit 1
   esac
 
@@ -48,51 +50,62 @@ latest_version() {
     cut -d'"' -f4
 }
 
+main() {
+  while test $# -gt 0; do
+    case "$1" in
+      -h|--help)
+        usage
+        exit 0
+        ;;
+      -t|--target)
+        target="$2"
+        shift
+        ;;
+      *)
+        echo "What's this you're passing me? pff... '$1'" >&2
+        usage
+        exit 1
+        ;;
+    esac
+    shift
+  done
 
-while test $# -gt 0; do
-  case "$1" in
-    -h|--help)
-      usage
-      exit 0
-      ;;
-    -t|--target)
-      target="$2"
-      shift
-      ;;
-    *)
-      echo "what's this you're passing me? pff... '$1'" >&2
-      usage
-      exit 1
-      ;;
-  esac
-  shift
-done
+  target="${target:-/usr/local/bin}"
+  dest="$target/friggen"
+  version=$(latest_version)
+  archive_url="https://github.com/${owner}/${repo}/releases/download/${version}/$(archive_name $version)"
+  temp_dir=$(mktemp -d || mktemp -d -t tmp)
 
-target="${target:-/usr/local/bin}"
-dest="$target/friggen"
-version=$(latest_version)
-archive_url="https://github.com/${owner}/${repo}/releases/download/${version}/$(archive_name $version)"
-temp_dir=$(mktemp -d || mktemp -d -t tmp)
+  echo "
+  ┏  •
+  ╋┏┓┓┏┓┏┓┏┓┏┓
+  ┛┛ ┗┗┫┗┫┗ ┛┗
+       ┛ ┛
+  "
 
-echo "
-┏  •
-╋┏┓┓┏┓┏┓┏┓┏┓
-┛┛ ┗┗┫┗┫┗ ┛┗
-     ┛ ┛
-"
+  if ! [[ -d $target ]]; then
+    echo "Yeah $target doesn't exist." >&2
+    echo "I'm not going to do everything for you." >&2
+    exit 1
+  fi
 
-if [[ -f $dest ]]; then
-  echo "uh... something already exists at $dest" >&2
-  echo "the heck are ya doing?" >&2
-  exit 1
-fi
+  if [[ -f $dest ]]; then
+    echo "Uh... something already exists at $dest." >&2
+    echo "The heck are ya doing?" >&2
+    exit 1
+  fi
 
-echo "fetching $archive_url"
-curl -fSsL "$archive_url" | tar -zxf - -C "$temp_dir"
+  echo "Fetching $archive_url"
+  curl -fSsL "$archive_url" | tar -zxf - -C "$temp_dir"
 
-mv "$temp_dir/friggen" "$target"
-chmod 755 "$dest"
+  mv "$temp_dir/friggen" "$target"
+  chmod 755 "$dest"
 
-rm -rf "$temp_dir"
+  rm -rf "$temp_dir"
 
-echo "friggen installed! » $dest"
+  echo "Friggen installed! » $dest"
+}
+
+# Main
+
+main "$@"

@@ -33,6 +33,22 @@ You can set the shell with a hash bang (`#!`), if that tickles ya.
 
 ## Installation
 
+### Nifty Install Script
+
+Run this... AFTER reading what the [script](https://github.com/troykinsella/friggen/blob/master/install.sh) does.
+Were you seriously just about to run this without know what it does? My word.
+
+```bash
+curl -fSsL https://raw.githubusercontent.com/troykinsella/friggen/master/install.sh | bash -s -- --target "~/bin"
+```
+
+Stuff to think about:
+* If you want to install to a root-owned target directory, like `/usr/local/bin` (which happens to be the default),
+  be sure to slap a `sudo` in front of `bash` in the above command.
+* Make the dang target directory yourself. I can't be responsible for your entire system.
+
+### Manual
+
 Stroll your tookus on over to [Releases](https://github.com/troykinsella/friggen/releases/latest) and
 download the right archive for your system. Don't see an archive for your
 system? Well... this is awkward. File a ticket?
