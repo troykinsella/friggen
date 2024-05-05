@@ -14,7 +14,6 @@ usage() {
     echo -e "-h|--help\tThis business"
     echo -e "-t|--target\tThe directory path in which friggen will be installed [Default: /usr/local/bin]"
   } >&2
-  exit 0
 }
 
 archive_name() {
@@ -54,18 +53,23 @@ while test $# -gt 0; do
   case "$1" in
     -h|--help)
       usage
+      exit 0
       ;;
     -t|--target)
       target="$2"
       shift
       ;;
     *)
+      echo "what's this you're passing me? pff... '$1'" >&2
+      usage
+      exit 1
       ;;
   esac
   shift
 done
 
 target="${target:-/usr/local/bin}"
+dest="$target/friggen"
 version=$(latest_version)
 archive_url="https://github.com/${owner}/${repo}/releases/download/${version}/$(archive_name $version)"
 temp_dir=$(mktemp -d || mktemp -d -t tmp)
@@ -77,12 +81,18 @@ echo "
      ┛ ┛
 "
 
+if [[ -f $dest ]]; then
+  echo "uh... something already exists at $dest" >&2
+  echo "the heck are ya doing?" >&2
+  exit 1
+fi
+
 echo "fetching $archive_url"
 curl -fSsL "$archive_url" | tar -zxf - -C "$temp_dir"
 
 mv "$temp_dir/friggen" "$target"
-chmod 755 "$target/friggen"
+chmod 755 "$dest"
 
 rm -rf "$temp_dir"
 
-echo "friggen installed! » $target/friggen"
+echo "friggen installed! » $dest"
